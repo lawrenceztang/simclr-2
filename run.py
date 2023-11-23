@@ -31,9 +31,11 @@ import model as model_lib
 import model_util as model_util
 
 import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_datasets as tfds
 import tensorflow_hub as hub
+from paired_dataset_.paired_dataset_builder import Builder
 
 
 FLAGS = flags.FLAGS
@@ -244,6 +246,10 @@ flags.DEFINE_boolean(
     'use_blur', True,
     'Whether or not to use Gaussian blur for augmentation during pretraining.')
 
+flags.DEFINE_float(
+    'video_prob', .5,
+    'Fraction of pretraining examples to use paired video frame')
+
 
 def build_hub_module(model, num_classes, global_step, checkpoint_path):
   """Create TF-Hub module."""
@@ -367,7 +373,6 @@ def main(argv):
   # Enable training summary.
   if FLAGS.train_summary_steps > 0:
     tf.config.set_soft_device_placement(True)
-
 
   builder = tfds.builder(FLAGS.dataset, data_dir=FLAGS.data_dir)
   builder.download_and_prepare()

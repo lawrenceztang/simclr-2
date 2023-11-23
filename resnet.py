@@ -67,7 +67,7 @@ class BatchNormalization(tf.layers.BatchNormalization):
   def _moments(self, inputs, reduction_axes, keep_dims, mask=None):
     """Compute the mean and variance: it overrides the original _moments."""
     shard_mean, shard_variance = super(BatchNormalization, self)._moments(
-        inputs, reduction_axes, keep_dims=keep_dims, mask=mask)
+        inputs, reduction_axes, keep_dims=keep_dims)
 
     num_shards = tpu_function.get_tpu_context().number_of_shards
     if num_shards and num_shards > 1:

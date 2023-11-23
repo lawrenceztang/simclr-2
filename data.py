@@ -24,6 +24,7 @@ from absl import flags
 
 import data_util as data_util
 import tensorflow.compat.v1 as tf
+import random
 
 FLAGS = flags.FLAGS
 
@@ -117,6 +118,14 @@ def build_input_fn(builder, is_training):
     preprocess_fn_finetune = get_preprocess_fn(is_training, is_pretrain=False)
     num_classes = builder.info.features['label'].num_classes
 
+    def map_fn_pretrain(image0, image1):
+        if random.random() < FLAGS.video_prob:
+            xs = [preprocess_fn_pretrain(image0), preprocess_fn_pretrain(image1)]
+        else:
+            xs = [preprocess_fn_pretrain(image0), preprocess_fn_pretrain(image0)]
+        image = tf.concat(xs, -1)
+        label = tf.zeros([num_classes])
+        return image, label, 1.0
     def map_fn(image, label):
       """Produces multiple transformations of the same batch."""
       if FLAGS.train_mode == 'pretrain':
@@ -130,17 +139,24 @@ def build_input_fn(builder, is_training):
         label = tf.one_hot(label, num_classes)
       return image, label, 1.0
 
-    dataset = builder.as_dataset(
-        split=FLAGS.train_split if is_training else FLAGS.eval_split,
-        shuffle_files=is_training, as_supervised=True)
+    if FLAGS.train_mode == 'pretrain':
+        dataset = builder.as_dataset(
+            split=FLAGS.train_split if is_training else FLAGS.eval_split,
+            shuffle_files=is_training, as_supervised=True)
+    else:
+        dataset = builder.as_dataset(
+            split=FLAGS.train_split if is_training else FLAGS.eval_split,
+            shuffle_files=is_training, as_supervised=True)
     if FLAGS.cache_dataset:
       dataset = dataset.cache()
     if is_training:
       buffer_multiplier = 50 if FLAGS.image_size <= 32 else 10
       dataset = dataset.shuffle(params['batch_size'] * buffer_multiplier)
       dataset = dataset.repeat(-1)
-    dataset = dataset.map(map_fn,
-                          num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    if FLAGS.train_mode == 'pretrain':
+        dataset = dataset.map(map_fn_pretrain, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    else:
+        dataset = dataset.map(map_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(params['batch_size'], drop_remainder=is_training)
     dataset = pad_to_batch(dataset, params['batch_size'])
     images, labels, mask = tf.data.make_one_shot_iterator(dataset).get_next()
