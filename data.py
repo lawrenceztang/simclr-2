@@ -139,21 +139,17 @@ def build_input_fn(builder, is_training):
         label = tf.one_hot(label, num_classes)
       return image, label, 1.0
 
-    if FLAGS.train_mode == 'pretrain':
-        dataset = builder.as_dataset(
-            split=FLAGS.train_split if is_training else FLAGS.eval_split,
-            shuffle_files=is_training, as_supervised=True)
-    else:
-        dataset = builder.as_dataset(
-            split=FLAGS.train_split if is_training else FLAGS.eval_split,
-            shuffle_files=is_training, as_supervised=True)
+    dataset = builder.as_dataset(
+        split=FLAGS.train_split if is_training else FLAGS.eval_split,
+        shuffle_files=is_training, as_supervised=True)
+
     if FLAGS.cache_dataset:
       dataset = dataset.cache()
     if is_training:
       buffer_multiplier = 50 if FLAGS.image_size <= 32 else 10
       dataset = dataset.shuffle(params['batch_size'] * buffer_multiplier)
       dataset = dataset.repeat(-1)
-    if FLAGS.train_mode == 'pretrain':
+    if FLAGS.train_mode == 'pretrain' and FLAGS.dataset == 'paired':
         dataset = dataset.map(map_fn_pretrain, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     else:
         dataset = dataset.map(map_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)

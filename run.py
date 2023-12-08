@@ -248,7 +248,7 @@ flags.DEFINE_boolean(
 
 flags.DEFINE_float(
     'video_prob', .5,
-    'Fraction of pretraining examples to use paired video frame')
+    'Fraction of pretraining examples to use p video frame')
 
 
 def build_hub_module(model, num_classes, global_step, checkpoint_path):
