@@ -2,8 +2,8 @@ import mmcv
 import os
 from random import randint
 
-directory = "/Users/lawrencetang/Documents/deep-learning-class/simclr-2/kinetics-dataset/k400_targz/train"
-save_directory = "paired_dataset"
+directory = "kinetics-dataset/k400/train"
+save_directory = "paired_dataset/downloads/manual"
 
 for filename in os.listdir(directory):
     # Check if the file is a video (e.g., .mp4, .avi)

@@ -2,3 +2,5 @@ absl-py
 tensorflow
 tensorflow-datasets
 tensorflow-hub==0.8.0
+pytorch
+openmim
